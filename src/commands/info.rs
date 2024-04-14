@@ -1,10 +1,39 @@
 use std::net::IpAddr;
+use anyhow::Error as AnyError;
 
 use indoc::formatdoc;
 use ipnet::IpNet;
 use itertools::Itertools;
+use crate::auto_net::AutoNet;
+use crate::input::Input;
+use crate::source::Source;
 
-pub fn process(addr: IpNet) -> String {
+pub fn process_batch(
+    sources: Vec<Source>,
+    sort: bool,
+    unique: bool,
+) -> Result<(), AnyError> {
+    let mut input = Input::<AutoNet>::Lazy(sources);
+    if sort {
+        input = input.sort()?;
+    }
+    if unique {
+        input = input.unique()?;
+    }
+
+    #[allow(unstable_name_collisions)]
+    for value in input
+        .into_iter()
+        .map(|addr| addr.map(|addr| process(addr.0)))
+        .intersperse_with(|| Ok(String::new()))
+    {
+        println!("{}", value?);
+    }
+
+    Ok(())
+}
+
+fn process(addr: IpNet) -> String {
     let mut output = formatdoc! {"
         address: {}
         network: {}
