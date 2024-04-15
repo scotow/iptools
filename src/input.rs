@@ -1,4 +1,10 @@
-use std::{convert, hash::Hash, str::FromStr};
+use std::{
+    collections::HashSet,
+    convert,
+    hash::{Hash, RandomState},
+    mem,
+    str::FromStr,
+};
 
 use anyhow::Error as AnyError;
 use itertools::Itertools;
@@ -11,49 +17,60 @@ pub enum Input<T> {
 }
 
 impl<T> Input<T> {
-    pub fn to_memory(self) -> Result<Input<T>, AnyError>
+    pub fn to_memory(&mut self) -> Result<(), AnyError>
     where
-        T: FromStr + 'static,
+        T: FromStr,
         <T as FromStr>::Err: Into<AnyError>,
     {
-        match &self {
-            Input::Memory(_values) => Ok(self),
-            Input::Lazy(_) => Ok(Self::Memory(
-                self.into_iter().collect::<Result<Vec<_>, _>>()?,
-            )),
+        match self {
+            Self::Memory(_values) => Ok(()),
+            Self::Lazy(sources) => {
+                *self = Self::Memory(
+                    Self::Lazy(mem::take(sources))
+                        .into_iter()
+                        .collect::<Result<Vec<_>, _>>()?,
+                );
+                Ok(())
+            }
         }
     }
 
-    pub fn sort(self) -> Result<Input<T>, AnyError>
+    pub fn sort(&mut self) -> Result<(), AnyError>
     where
-        T: FromStr + Ord + 'static,
+        T: FromStr + Ord,
         <T as FromStr>::Err: Into<AnyError>,
     {
-        let mut this = self.to_memory()?;
-        match &mut this {
+        self.to_memory()?;
+        match self {
             Input::Memory(elems) => {
                 elems.sort();
             }
             Input::Lazy(_) => unreachable!(),
         }
-        Ok(this)
+        Ok(())
     }
 
-    pub fn unique(self) -> Result<Input<T>, AnyError>
+    pub fn unique(&mut self) -> Result<(), AnyError>
     where
-        T: FromStr + Clone + Eq + Hash + 'static,
+        T: FromStr + Eq + Hash,
         <T as FromStr>::Err: Into<AnyError>,
     {
-        match self.to_memory()? {
-            Input::Memory(elems) => Ok(Self::Memory(elems.into_iter().unique().collect())),
+        self.to_memory()?;
+        match self {
+            Input::Memory(elems) => {
+                *elems = HashSet::<_, RandomState>::from_iter(mem::take(elems))
+                    .into_iter()
+                    .collect()
+            }
             Input::Lazy(_) => unreachable!(),
         }
+        Ok(())
     }
 }
 
 impl<T> IntoIterator for Input<T>
 where
-    T: FromStr + 'static,
+    T: FromStr,
     <T as FromStr>::Err: Into<AnyError>,
 {
     type Item = Result<T, AnyError>;

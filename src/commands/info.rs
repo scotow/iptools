@@ -37,10 +37,10 @@ const DEFAULT_IPV6_FIELDS: &[Field] = &[
 pub fn process_batch(sources: Vec<Source>, sort: bool, unique: bool) -> Result<(), AnyError> {
     let mut input = Input::<AutoNet>::Lazy(sources);
     if sort {
-        input = input.sort()?;
+        input.sort()?;
     }
     if unique {
-        input = input.unique()?;
+        input.unique()?;
     }
 
     #[allow(unstable_name_collisions)]
