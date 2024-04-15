@@ -19,6 +19,7 @@ pub struct Options {
 
 #[derive(Subcommand, Debug)]
 pub enum Command {
+    Cat,
     Info,
     Net {
         #[arg(short, long, alias = "prefix")]

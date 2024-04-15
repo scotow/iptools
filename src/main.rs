@@ -1,3 +1,4 @@
+mod addr_or_net;
 mod auto_net;
 mod commands;
 mod input;
@@ -36,6 +37,7 @@ fn main() -> Result<(), AnyError> {
     };
 
     match options.command {
+        Command::Cat => commands::cat::process_batch(sources, options.sort, options.unique)?,
         Command::Info => commands::info::process_batch(sources, options.sort, options.unique)?,
         Command::Net { prefix_len, cidr } => {
             commands::net::process_batch(sources, prefix_len, cidr, options.sort, options.unique)?;
