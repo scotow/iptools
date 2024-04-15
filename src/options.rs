@@ -33,4 +33,8 @@ pub enum Command {
         #[arg(short = 'C', long)]
         cidr: bool,
     },
+    Hosts {
+        #[arg(short, long)]
+        all: bool,
+    },
 }

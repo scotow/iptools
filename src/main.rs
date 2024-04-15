@@ -51,6 +51,9 @@ fn main() -> Result<(), AnyError> {
                 options.unique,
             )?;
         }
+        Command::Hosts { all } => {
+            commands::hosts::process_batch(sources, all, options.sort, options.unique)?
+        }
     }
 
     Ok(())

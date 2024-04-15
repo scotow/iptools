@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.82"
 clap = { version = "4.5.4", features = ["derive"] }
+either = "1.11.0"
 ipnet = "2.9.0"
 itertools = "0.12.1"
 
