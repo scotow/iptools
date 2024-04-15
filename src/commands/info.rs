@@ -1,13 +1,10 @@
-use std::fmt;
-use std::net::IpAddr;
-use anyhow::Error as AnyError;
-use std::fmt::Write;
+use std::{fmt, fmt::Write, net::IpAddr};
 
+use anyhow::Error as AnyError;
 use ipnet::IpNet;
 use itertools::Itertools;
-use crate::auto_net::AutoNet;
-use crate::input::Input;
-use crate::source::Source;
+
+use crate::{auto_net::AutoNet, input::Input, source::Source};
 
 const DEFAULT_IPV4_FIELDS: &[Field] = &[
     Field::Address,
@@ -37,11 +34,7 @@ const DEFAULT_IPV6_FIELDS: &[Field] = &[
     Field::BinaryNetworkMaskAddress,
 ];
 
-pub fn process_batch(
-    sources: Vec<Source>,
-    sort: bool,
-    unique: bool,
-) -> Result<(), AnyError> {
+pub fn process_batch(sources: Vec<Source>, sort: bool, unique: bool) -> Result<(), AnyError> {
     let mut input = Input::<AutoNet>::Lazy(sources);
     if sort {
         input = input.sort()?;
@@ -104,21 +97,30 @@ impl Field {
         match self {
             Field::Address => write!(s, "address: {}", addr.addr()),
             Field::NetworkAddress => write!(s, "network: {}", addr.network()),
-            Field::HostsRange => write!(s, "hosts range: {} - {}", addr.hosts().next().unwrap(), addr.hosts().rev().next().unwrap()),
+            Field::HostsRange => write!(
+                s,
+                "hosts range: {} - {}",
+                addr.hosts().next().unwrap(),
+                addr.hosts().rev().next().unwrap()
+            ),
             Field::BroadcastAddress => write!(s, "broadcast: {}", addr.broadcast()),
-            Field::HostsCount => write!(s, "hosts: {}", 2u128.pow((addr.max_prefix_len() - addr.prefix_len()) as u32)),
+            Field::HostsCount => write!(
+                s,
+                "hosts: {}",
+                2u128.pow((addr.max_prefix_len() - addr.prefix_len()) as u32)
+            ),
             Field::UsableHostsCount => write!(s, "usable hosts: {}", addr.hosts().count()),
             Field::NetworkMaskAddress => write!(s, "net mask: {}", addr.netmask()),
             Field::HostMaskAddress => write!(s, "host mask: {}", addr.hostmask()),
             Field::Cidr => write!(s, "CIDR: {}", addr.prefix_len()),
             Field::FullAddress => write!(s, "full: {}", addr),
             Field::BinaryAddress => write!(s, "binary address: {}", to_binary(addr.addr())),
-            Field::BinaryNetworkMaskAddress => write!(s, "binary net mask: {}", to_binary(addr.netmask())),
-            Field::Ipv6Mapping => {
-                match addr {
-                    IpNet::V4(addr) => write!(s, "IPv6 mapping: {}", addr.addr().to_ipv6_compatible()),
-                    IpNet::V6(_) => Field::Address.write(addr, s),
-                }
+            Field::BinaryNetworkMaskAddress => {
+                write!(s, "binary net mask: {}", to_binary(addr.netmask()))
+            }
+            Field::Ipv6Mapping => match addr {
+                IpNet::V4(addr) => write!(s, "IPv6 mapping: {}", addr.addr().to_ipv6_compatible()),
+                IpNet::V6(_) => Field::Address.write(addr, s),
             },
         }
     }

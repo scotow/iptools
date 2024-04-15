@@ -1,4 +1,4 @@
-use std::{hash::Hash, str::FromStr};
+use std::{convert, hash::Hash, str::FromStr};
 
 use anyhow::Error as AnyError;
 use itertools::Itertools;
@@ -62,21 +62,24 @@ where
     fn into_iter(self) -> Self::IntoIter {
         match self {
             Input::Memory(values) => IntoIter::Memory(values.into_iter()),
-            Input::Lazy(sources) => IntoIter::Lazy(Box::new(sources.into_iter().flat_map(|s| {
-                match s.resolve() {
-                    Ok(content) => content
-                        .trim()
-                        .lines()
-                        .map(|l| {
-                            T::from_str(l).map_err(|err| {
+            Input::Lazy(sources) => IntoIter::Lazy(Box::new({
+                sources
+                    .into_iter()
+                    .map(|s| s.into_iter())
+                    .flatten_ok()
+                    .filter(|l| match l {
+                        Ok(Ok(l)) => !l.trim().is_empty(),
+                        _ => true,
+                    })
+                    .map(|source| {
+                        source.and_then(convert::identity).and_then(|l| {
+                            T::from_str(l.trim()).map_err(|err| {
                                 err.into()
-                                    .context(format!("cannot parse address or network: {l}"))
+                                    .context(format!("invalid address or network: {l}"))
                             })
                         })
-                        .collect::<Vec<_>>(),
-                    Err(err) => vec![Err(err)],
-                }
-            }))),
+                    })
+            })),
         }
     }
 }

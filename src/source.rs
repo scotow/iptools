@@ -1,4 +1,10 @@
-use std::{convert::Infallible, fs, io, io::Read, path::PathBuf, str::FromStr};
+use std::{
+    convert::Infallible,
+    fs::File,
+    io::{self, BufRead, BufReader, Lines, StdinLock},
+    path::PathBuf,
+    str::FromStr,
+};
 
 use anyhow::Error as AnyError;
 
@@ -10,18 +16,12 @@ pub enum Source {
 }
 
 impl Source {
-    pub fn resolve(self) -> Result<String, AnyError> {
+    pub fn into_iter(self) -> Result<IntoIter, AnyError> {
         Ok(match self {
-            Source::File(path) => fs::read_to_string(path)?,
-            Source::Stdin => {
-                let mut buffer = String::new();
-                io::stdin().lock().read_to_string(&mut buffer)?;
-                buffer
-            }
-            Source::Arg(s) => s,
-        }
-        .trim()
-        .to_owned())
+            Source::File(path) => IntoIter::File(BufReader::new(File::open(&path)?).lines()),
+            Source::Stdin => IntoIter::Stdin(io::stdin().lock().lines()),
+            Source::Arg(arg) => IntoIter::Arg(Some(arg)),
+        })
     }
 }
 
@@ -34,5 +34,23 @@ impl FromStr for Source {
         } else {
             Self::File(PathBuf::from_str(input)?)
         })
+    }
+}
+
+pub enum IntoIter {
+    File(Lines<BufReader<File>>),
+    Stdin(Lines<StdinLock<'static>>),
+    Arg(Option<String>),
+}
+
+impl Iterator for IntoIter {
+    type Item = Result<String, AnyError>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            IntoIter::File(reader) => reader.next().map(|l| l.map_err(AnyError::from)),
+            IntoIter::Stdin(lock) => lock.next().map(|l| l.map_err(AnyError::from)),
+            IntoIter::Arg(arg) => arg.take().map(Ok),
+        }
     }
 }
