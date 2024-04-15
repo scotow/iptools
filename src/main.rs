@@ -42,6 +42,15 @@ fn main() -> Result<(), AnyError> {
         Command::Net { prefix_len, cidr } => {
             commands::net::process_batch(sources, prefix_len, cidr, options.sort, options.unique)?;
         }
+        Command::Subnet { prefix_len, cidr } => {
+            commands::subnet::process_batch(
+                sources,
+                prefix_len,
+                cidr,
+                options.sort,
+                options.unique,
+            )?;
+        }
     }
 
     Ok(())

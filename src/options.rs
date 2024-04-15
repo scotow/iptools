@@ -27,4 +27,10 @@ pub enum Command {
         #[arg(short = 'C', long)]
         cidr: bool,
     },
+    Subnet {
+        #[arg(short, long, alias = "prefix")]
+        prefix_len: u8,
+        #[arg(short = 'C', long)]
+        cidr: bool,
+    },
 }
