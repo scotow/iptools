@@ -1,6 +1,9 @@
+#![warn(unused_crate_dependencies)]
+
 mod addr_or_net;
 mod auto_net;
 mod commands;
+mod configuration;
 mod input;
 mod options;
 mod source;
@@ -9,6 +12,7 @@ use anyhow::{bail, Error as AnyError};
 use clap::Parser;
 
 use crate::{
+    configuration::Configuration,
     options::{Command, Options},
     source::Source,
 };
@@ -53,6 +57,16 @@ fn main() -> Result<(), AnyError> {
         }
         Command::Hosts { all } => {
             commands::hosts::process_batch(sources, all, options.sort, options.unique)?
+        }
+        Command::Filter { query } => {
+            let configuration = Configuration::load(options.configuration_path)?;
+            commands::filter::process_batch(
+                sources,
+                query,
+                configuration,
+                options.sort,
+                options.unique,
+            )?
         }
     }
 

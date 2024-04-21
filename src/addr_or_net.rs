@@ -13,6 +13,15 @@ pub enum AddrOrNet {
     IpNet(IpNet),
 }
 
+impl From<AddrOrNet> for IpNet {
+    fn from(input: AddrOrNet) -> Self {
+        match input {
+            AddrOrNet::IpAddr(addr) => IpNet::from(addr),
+            AddrOrNet::IpNet(net) => net,
+        }
+    }
+}
+
 impl FromStr for AddrOrNet {
     type Err = AnyError;
 

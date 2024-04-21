@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use clap::{Parser, Subcommand};
 
 use crate::source::Source;
@@ -5,6 +7,10 @@ use crate::source::Source;
 #[derive(Parser, Debug)]
 #[command(version, about)]
 pub struct Options {
+    /// Path to the configuration file
+    /// ({$PWD/.config,$HOME/.config,/etc}/iptools.toml if not specified).
+    #[arg(short = 'C', long = "config", global = true)]
+    pub configuration_path: Option<PathBuf>,
     #[command(subcommand)]
     pub command: Command,
     /// File path(s) to read from ('-' for stdin).
@@ -50,5 +56,11 @@ pub enum Command {
         /// Add network and broadcast address if available.
         #[arg(short, long)]
         all: bool,
+    },
+    /// Filter addresses and networks based on a query.
+    Filter {
+        /// Add network and broadcast address if available.
+        #[arg(short, long)]
+        query: String,
     },
 }
