@@ -39,7 +39,7 @@ pub enum Command {
         #[arg(short, long, alias = "prefix")]
         prefix_len: u8,
         /// Display results using CIDR notation.
-        #[arg(short = 'C', long)]
+        #[arg(short, long)]
         cidr: bool,
     },
     /// List all the subnets of a network.
@@ -48,7 +48,7 @@ pub enum Command {
         #[arg(short, long, alias = "prefix")]
         prefix_len: u8,
         /// Display results using CIDR notation.
-        #[arg(short = 'C', long)]
+        #[arg(short, long)]
         cidr: bool,
     },
     /// List all the IP addresses belonging to a network.
@@ -62,5 +62,11 @@ pub enum Command {
         /// Add network and broadcast address if available.
         #[arg(short, long)]
         query: String,
+    },
+    /// Get the first matching group of IP addresses or networks.
+    Group {
+        /// Continue if no group matches an address or network.
+        #[arg(short, long)]
+        continue_no_match: bool,
     },
 }

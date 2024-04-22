@@ -4,6 +4,7 @@ mod addr_or_net;
 mod auto_net;
 mod commands;
 mod configuration;
+mod group;
 mod input;
 mod options;
 mod source;
@@ -64,6 +65,16 @@ fn main() -> Result<(), AnyError> {
                 sources,
                 query,
                 configuration,
+                options.sort,
+                options.unique,
+            )?
+        }
+        Command::Group { continue_no_match } => {
+            let configuration = Configuration::load(options.configuration_path)?;
+            commands::group::process_batch(
+                sources,
+                configuration,
+                continue_no_match,
                 options.sort,
                 options.unique,
             )?

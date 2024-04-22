@@ -1,12 +1,14 @@
 use std::sync::OnceLock;
 
-use anyhow::{bail, Error as AnyError};
+use anyhow::Error as AnyError;
 use evalexpr::{ContextWithMutableVariables, HashMapContext, Value};
 use ipnet::IpNet;
 use regex::Regex;
 use strum::{EnumIter, IntoEnumIterator, IntoStaticStr};
 
-use crate::{addr_or_net::AddrOrNet, configuration::Configuration, input::Input, source::Source};
+use crate::{
+    addr_or_net::AddrOrNet, configuration::Configuration, group, input::Input, source::Source,
+};
 
 pub fn process_batch(
     sources: Vec<Source>,
@@ -90,13 +92,16 @@ impl Placeholder {
             ),
             Placeholder::Prefix => Value::Int(IpNet::from(input).prefix_len() as i64),
             Placeholder::Group => {
-                match matching_groups(input, configuration)?.next().transpose()? {
+                match group::matching_groups(input, configuration)?
+                    .next()
+                    .transpose()?
+                {
                     Some(group) => Value::String(group.to_owned()),
                     None => Value::Empty,
                 }
             }
             Placeholder::Groups => Value::Tuple(
-                matching_groups(input, configuration)?
+                group::matching_groups(input, configuration)?
                     .map(|group| group.map(|group| Value::String(group.to_owned())))
                     .collect::<Result<_, _>>()?,
             ),
@@ -106,32 +111,4 @@ impl Placeholder {
             }
         })
     }
-}
-
-fn matching_groups(
-    input: AddrOrNet,
-    configuration: Option<&mut Configuration>,
-) -> Result<impl Iterator<Item = Result<&str, AnyError>>, AnyError> {
-    let groups = match configuration {
-        Some(configuration) => match &mut configuration.groups {
-            Some(groups) => groups,
-            None => bail!("no groups defined in configuration"),
-        },
-        None => bail!("configuration required to filter based on groups"),
-    };
-
-    Ok(groups.iter_mut().flat_map(move |group| {
-        group
-            .source
-            .load()
-            .map(|nets| {
-                nets.iter()
-                    .any(|net| match input {
-                        AddrOrNet::IpAddr(addr) => net.0.contains(&addr),
-                        AddrOrNet::IpNet(sub_net) => net.0.contains(&sub_net),
-                    })
-                    .then_some(group.name.as_str())
-            })
-            .transpose()
-    }))
 }
