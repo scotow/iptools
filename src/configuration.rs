@@ -1,6 +1,6 @@
 use std::{env, fs, path::PathBuf, process::Command};
 
-use anyhow::Error as AnyError;
+use anyhow::{Context, Error as AnyError};
 use config_finder::ConfigDirs;
 use serde::Deserialize;
 
@@ -64,8 +64,10 @@ impl GroupSource {
                 let nets = fs::read_to_string(path)?
                     .trim()
                     .lines()
-                    .map(|l| l.parse())
-                    .collect::<Result<Vec<_>, _>>()?;
+                    .filter(|l| !l.trim().is_empty())
+                    .map(str::parse)
+                    .collect::<Result<Vec<_>, _>>()
+                    .context("invalid group file content")?;
                 *self = Self::Raw { nets };
                 self.load()
             }
@@ -75,13 +77,19 @@ impl GroupSource {
                     .or_else(|| env::var("SHELL").ok())
                     .unwrap_or_else(|| "sh".to_owned());
                 let output = String::from_utf8(
-                    Command::new(&shell).args(["-c", &command]).output()?.stdout,
+                    Command::new(&shell)
+                        .args(["-c", &command])
+                        .output()
+                        .context("group command failure")?
+                        .stdout,
                 )?;
                 let nets = output
                     .trim()
                     .lines()
-                    .map(|l| l.parse())
-                    .collect::<Result<Vec<_>, _>>()?;
+                    .filter(|l| !l.trim().is_empty())
+                    .map(str::parse)
+                    .collect::<Result<Vec<_>, _>>()
+                    .context("invalid group command output")?;
                 *self = Self::Raw { nets };
                 self.load()
             }

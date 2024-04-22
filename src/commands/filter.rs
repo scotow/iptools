@@ -83,14 +83,16 @@ impl Placeholder {
                 .to_owned(),
             ),
             Placeholder::Prefix => Value::Int(IpNet::from(input).prefix_len() as i64),
-            Placeholder::Group => match matching_groups(input, configuration)?.next() {
-                Some(group) => Value::String(group.to_owned()),
-                None => Value::Empty,
-            },
+            Placeholder::Group => {
+                match matching_groups(input, configuration)?.next().transpose()? {
+                    Some(group) => Value::String(group.to_owned()),
+                    None => Value::Empty,
+                }
+            }
             Placeholder::Groups => Value::Tuple(
                 matching_groups(input, configuration)?
-                    .map(|group| Value::String(group.to_owned()))
-                    .collect(),
+                    .map(|group| group.map(|group| Value::String(group.to_owned())))
+                    .collect::<Result<_, _>>()?,
             ),
             Placeholder::Hosts => {
                 let net = IpNet::from(input);
@@ -103,7 +105,7 @@ impl Placeholder {
 fn matching_groups(
     input: AddrOrNet,
     configuration: Option<&mut Configuration>,
-) -> Result<impl Iterator<Item = &str>, AnyError> {
+) -> Result<impl Iterator<Item = Result<&str, AnyError>>, AnyError> {
     let groups = match configuration {
         Some(configuration) => match &mut configuration.groups {
             Some(groups) => groups,
@@ -112,17 +114,18 @@ fn matching_groups(
         None => bail!("configuration required to filter based on groups"),
     };
 
-    Ok(groups.iter_mut().filter_map(move |group| {
+    Ok(groups.iter_mut().flat_map(move |group| {
         group
             .source
             .load()
-            // TODO: propagate error.
-            .unwrap()
-            .into_iter()
-            .any(|net| match input {
-                AddrOrNet::IpAddr(addr) => net.0.contains(&addr),
-                AddrOrNet::IpNet(sub_net) => net.0.contains(&sub_net),
+            .map(|nets| {
+                nets.into_iter()
+                    .any(|net| match input {
+                        AddrOrNet::IpAddr(addr) => net.0.contains(&addr),
+                        AddrOrNet::IpNet(sub_net) => net.0.contains(&sub_net),
+                    })
+                    .then_some(group.name.as_str())
             })
-            .then_some(group.name.as_str())
+            .transpose()
     }))
 }
