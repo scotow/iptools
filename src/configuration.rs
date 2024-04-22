@@ -77,7 +77,7 @@ impl GroupSource {
                     .or_else(|| env::var("SHELL").ok())
                     .unwrap_or_else(|| "sh".to_owned());
                 let output = String::from_utf8(
-                    Command::new(&shell)
+                    Command::new(shell)
                         .args(["-c", &command])
                         .output()
                         .context("group command failure")?

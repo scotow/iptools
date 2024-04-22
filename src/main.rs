@@ -35,7 +35,7 @@ fn main() -> Result<(), AnyError> {
         options
             .args
             .into_iter()
-            .map(|a| Source::Arg(a))
+            .map(Source::Arg)
             .chain(options.inputs)
             .collect()
     };

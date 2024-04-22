@@ -119,7 +119,7 @@ fn matching_groups(
             .source
             .load()
             .map(|nets| {
-                nets.into_iter()
+                nets.iter()
                     .any(|net| match input {
                         AddrOrNet::IpAddr(addr) => net.0.contains(&addr),
                         AddrOrNet::IpNet(sub_net) => net.0.contains(&sub_net),

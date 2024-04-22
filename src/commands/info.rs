@@ -101,7 +101,7 @@ impl Field {
                 s,
                 "hosts range: {} - {}",
                 addr.hosts().next().unwrap(),
-                addr.hosts().rev().next().unwrap()
+                addr.hosts().next_back().unwrap()
             ),
             Field::BroadcastAddress => write!(s, "broadcast: {}", addr.broadcast()),
             Field::HostsCount => write!(

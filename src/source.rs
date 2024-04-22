@@ -18,7 +18,7 @@ pub enum Source {
 impl Source {
     pub fn into_iter(self) -> Result<IntoIter, AnyError> {
         Ok(match self {
-            Source::File(path) => IntoIter::File(BufReader::new(File::open(&path)?).lines()),
+            Source::File(path) => IntoIter::File(BufReader::new(File::open(path)?).lines()),
             Source::Stdin => IntoIter::Stdin(io::stdin().lock().lines()),
             Source::Arg(arg) => IntoIter::Arg(Some(arg)),
         })

@@ -17,7 +17,7 @@ pub enum Input<T> {
 }
 
 impl<T> Input<T> {
-    pub fn to_memory(&mut self) -> Result<(), AnyError>
+    pub fn load_to_memory(&mut self) -> Result<(), AnyError>
     where
         T: FromStr,
         <T as FromStr>::Err: Into<AnyError>,
@@ -40,7 +40,7 @@ impl<T> Input<T> {
         T: FromStr + Ord,
         <T as FromStr>::Err: Into<AnyError>,
     {
-        self.to_memory()?;
+        self.load_to_memory()?;
         match self {
             Input::Memory(elems) => {
                 elems.sort();
@@ -55,7 +55,7 @@ impl<T> Input<T> {
         T: FromStr + Eq + Hash,
         <T as FromStr>::Err: Into<AnyError>,
     {
-        self.to_memory()?;
+        self.load_to_memory()?;
         match self {
             Input::Memory(elems) => {
                 *elems = HashSet::<_, RandomState>::from_iter(mem::take(elems))
