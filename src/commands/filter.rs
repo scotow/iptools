@@ -12,10 +12,16 @@ pub fn process_batch(
     sources: Vec<Source>,
     query: String,
     mut configuration: Option<Configuration>,
-    _sort: bool,
-    _unique: bool,
+    sort: bool,
+    unique: bool,
 ) -> Result<(), AnyError> {
-    let input = Input::<AddrOrNet>::Lazy(sources);
+    let mut input = Input::<AddrOrNet>::Lazy(sources);
+    if unique {
+        input.unique()?;
+    }
+    if sort {
+        input.sort()?;
+    }
 
     let requested_placeholders = Placeholder::requested(&query).collect::<Vec<_>>();
     for value in input {
