@@ -69,12 +69,12 @@ fn main() -> Result<(), AnyError> {
                 options.unique,
             )?
         }
-        Command::Group { continue_no_match } => {
+        Command::Group { exit_no_match } => {
             let configuration = Configuration::load(options.configuration_path)?;
             commands::group::process_batch(
                 sources,
                 configuration,
-                continue_no_match,
+                exit_no_match,
                 options.sort,
                 options.unique,
             )?

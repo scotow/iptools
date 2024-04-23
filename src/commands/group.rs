@@ -8,7 +8,7 @@ use crate::{
 pub fn process_batch(
     sources: Vec<Source>,
     mut configuration: Option<Configuration>,
-    continue_no_match: bool,
+    exit_no_match: bool,
     sort: bool,
     unique: bool,
 ) -> Result<(), AnyError> {
@@ -23,7 +23,7 @@ pub fn process_batch(
             {
                 Some(group) => groups.push(group.to_owned()),
                 None => {
-                    if !continue_no_match {
+                    if exit_no_match {
                         bail!("no group found for {}", value);
                     }
                 }
@@ -45,7 +45,7 @@ pub fn process_batch(
             {
                 Some(group) => println!("{group}"),
                 None => {
-                    if !continue_no_match {
+                    if exit_no_match {
                         bail!("no group found for {}", value);
                     }
                 }

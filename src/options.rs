@@ -65,8 +65,8 @@ pub enum Command {
     },
     /// Get the first matching group of IP addresses or networks.
     Group {
-        /// Continue if no group matches an address or network.
-        #[arg(short, long)]
-        continue_no_match: bool,
+        /// Exit on no group match.
+        #[arg(short = 'f', long)]
+        exit_no_match: bool,
     },
 }
