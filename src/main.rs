@@ -43,7 +43,9 @@ fn main() -> Result<(), AnyError> {
 
     match options.command {
         Command::Cat => commands::cat::process_batch(sources, options.sort, options.unique)?,
-        Command::Info => commands::info::process_batch(sources, options.sort, options.unique)?,
+        Command::Info { no_padding } => {
+            commands::info::process_batch(sources, !no_padding, options.sort, options.unique)?
+        }
         Command::Net { prefix_len, cidr } => {
             commands::net::process_batch(sources, prefix_len, cidr, options.sort, options.unique)?;
         }

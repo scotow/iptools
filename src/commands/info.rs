@@ -34,7 +34,12 @@ const DEFAULT_IPV6_FIELDS: &[Field] = &[
     Field::BinaryNetworkMaskAddress,
 ];
 
-pub fn process_batch(sources: Vec<Source>, sort: bool, unique: bool) -> Result<(), AnyError> {
+pub fn process_batch(
+    sources: Vec<Source>,
+    padding: bool,
+    sort: bool,
+    unique: bool,
+) -> Result<(), AnyError> {
     let mut input = Input::<AutoNet>::Lazy(sources);
     if unique {
         input.unique()?;
@@ -46,7 +51,7 @@ pub fn process_batch(sources: Vec<Source>, sort: bool, unique: bool) -> Result<(
     #[allow(unstable_name_collisions)]
     for value in input
         .into_iter()
-        .map(|addr| addr.map(|addr| process(addr.0)))
+        .map(|addr| addr.map(|addr| process(addr.0, padding)))
         .intersperse_with(|| Ok(String::new()))
     {
         println!("{}", value?);
@@ -55,23 +60,24 @@ pub fn process_batch(sources: Vec<Source>, sort: bool, unique: bool) -> Result<(
     Ok(())
 }
 
-fn process(addr: IpNet) -> String {
+fn process(addr: IpNet, padding: bool) -> String {
     let fields = match addr {
         IpNet::V4(_) => DEFAULT_IPV4_FIELDS,
         IpNet::V6(_) => DEFAULT_IPV6_FIELDS,
     };
     let mut buffer = String::with_capacity(1024);
+    let label_max_len = padding.then(|| fields.iter().map(|f| f.label().len()).max().unwrap());
     let tail = match fields.split_last() {
         Some((tail, head)) => {
             for field in head {
-                field.write(addr, &mut buffer).unwrap();
+                field.write(addr, &mut buffer, label_max_len).unwrap();
                 buffer.push('\n');
             }
             tail
         }
         None => &fields[0],
     };
-    tail.write(addr, &mut buffer).unwrap();
+    tail.write(addr, &mut buffer, label_max_len).unwrap();
     buffer
 }
 
@@ -93,35 +99,60 @@ enum Field {
 }
 
 impl Field {
-    fn write(self, addr: IpNet, s: &mut String) -> fmt::Result {
+    fn write(self, addr: IpNet, s: &mut String, label_max_len: Option<usize>) -> fmt::Result {
+        let label = self.label();
+        write!(
+            s,
+            "{label}:{:1$}",
+            "",
+            label_max_len.map(|m| m - label.len()).unwrap_or(0) + 1
+        )?;
         match self {
-            Field::Address => write!(s, "address: {}", addr.addr()),
-            Field::NetworkAddress => write!(s, "network: {}", addr.network()),
+            Field::Address => write!(s, "{}", addr.addr()),
+            Field::NetworkAddress => write!(s, "{}", addr.network()),
             Field::HostsRange => write!(
                 s,
-                "hosts range: {} - {}",
+                "{} - {}",
                 addr.hosts().next().unwrap(),
                 addr.hosts().next_back().unwrap()
             ),
-            Field::BroadcastAddress => write!(s, "broadcast: {}", addr.broadcast()),
+            Field::BroadcastAddress => write!(s, "{}", addr.broadcast()),
             Field::HostsCount => write!(
                 s,
-                "hosts: {}",
+                "{}",
                 2u128.pow((addr.max_prefix_len() - addr.prefix_len()) as u32)
             ),
-            Field::UsableHostsCount => write!(s, "usable hosts: {}", addr.hosts().count()),
-            Field::NetworkMaskAddress => write!(s, "net mask: {}", addr.netmask()),
-            Field::HostMaskAddress => write!(s, "host mask: {}", addr.hostmask()),
-            Field::Cidr => write!(s, "CIDR: {}", addr.prefix_len()),
-            Field::FullAddress => write!(s, "full: {}", addr),
-            Field::BinaryAddress => write!(s, "binary address: {}", to_binary(addr.addr())),
+            Field::UsableHostsCount => write!(s, "{}", addr.hosts().count()),
+            Field::NetworkMaskAddress => write!(s, "{}", addr.netmask()),
+            Field::HostMaskAddress => write!(s, "{}", addr.hostmask()),
+            Field::Cidr => write!(s, "{}", addr.prefix_len()),
+            Field::FullAddress => write!(s, "{}", addr),
+            Field::BinaryAddress => write!(s, "{}", to_binary(addr.addr())),
             Field::BinaryNetworkMaskAddress => {
-                write!(s, "binary net mask: {}", to_binary(addr.netmask()))
+                write!(s, "{}", to_binary(addr.netmask()))
             }
             Field::Ipv6Mapping => match addr {
-                IpNet::V4(addr) => write!(s, "IPv6 mapping: {}", addr.addr().to_ipv6_compatible()),
-                IpNet::V6(_) => Field::Address.write(addr, s),
+                IpNet::V4(addr) => write!(s, "{}", addr.addr().to_ipv6_compatible()),
+                IpNet::V6(_) => Field::Address.write(addr, s, label_max_len),
             },
+        }
+    }
+
+    fn label(self) -> &'static str {
+        match self {
+            Field::Address => "address",
+            Field::NetworkAddress => "network",
+            Field::HostsRange => "hosts ranges",
+            Field::BroadcastAddress => "broadcast",
+            Field::HostsCount => "hosts",
+            Field::UsableHostsCount => "usable hosts",
+            Field::NetworkMaskAddress => "net mask",
+            Field::HostMaskAddress => "host mask",
+            Field::Cidr => "cidr",
+            Field::FullAddress => "full",
+            Field::BinaryAddress => "binary address",
+            Field::BinaryNetworkMaskAddress => "binary net mask",
+            Field::Ipv6Mapping => "IPv6 mapping",
         }
     }
 }

@@ -32,7 +32,11 @@ pub enum Command {
     /// Parse, validate and concatenate IP addresses or networks.
     Cat,
     /// Describe an IP address or network.
-    Info,
+    Info {
+        /// Disable column alignment padding.
+        #[arg(short = 'P', long)]
+        no_padding: bool,
+    },
     /// Get the network address of an IP address.
     Net {
         /// Prefix length of desired network.
