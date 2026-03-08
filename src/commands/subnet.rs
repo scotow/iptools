@@ -1,4 +1,4 @@
-use anyhow::{bail, Context, Error as AnyError};
+use anyhow::{Context, bail};
 use ipnet::{IpNet, IpSubnets};
 use itertools::Itertools;
 
@@ -10,7 +10,7 @@ pub fn process_batch(
     cidr: bool,
     sort: bool,
     unique: bool,
-) -> Result<(), AnyError> {
+) -> Result<(), anyhow::Error> {
     let input = Input::<IpNet>::Lazy(sources);
     if sort || unique {
         let mut nets = input
@@ -44,7 +44,7 @@ pub fn process_batch(
     Ok(())
 }
 
-fn process_single(net: IpNet, prefix_len: u8) -> Result<IpSubnets, AnyError> {
+fn process_single(net: IpNet, prefix_len: u8) -> Result<IpSubnets, anyhow::Error> {
     if prefix_len < net.prefix_len() {
         bail!("prefix is shorter than original subnet")
     }

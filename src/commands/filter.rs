@@ -1,22 +1,19 @@
 use std::sync::OnceLock;
 
-use anyhow::Error as AnyError;
 use evalexpr::{ContextWithMutableVariables, HashMapContext, Value};
 use ipnet::IpNet;
 use regex::Regex;
 use strum::{EnumIter, IntoEnumIterator, IntoStaticStr};
 
-use crate::{
-    addr_or_net::AddrOrNet, configuration::Configuration, group, input::Input, source::Source,
-};
+use crate::{addr_or_net::AddrOrNet, config::Config, group, input::Input, source::Source};
 
 pub fn process_batch(
     sources: Vec<Source>,
     query: String,
-    mut configuration: Option<Configuration>,
+    mut configuration: Option<Config>,
     sort: bool,
     unique: bool,
-) -> Result<(), AnyError> {
+) -> Result<(), anyhow::Error> {
     let mut input = Input::<AddrOrNet>::Lazy(sources);
     if unique {
         input.unique()?;
@@ -76,8 +73,8 @@ impl Placeholder {
     fn resolve(
         self,
         input: AddrOrNet,
-        configuration: Option<&mut Configuration>,
-    ) -> Result<Value, AnyError> {
+        configuration: Option<&mut Config>,
+    ) -> Result<Value, anyhow::Error> {
         Ok(match self {
             Placeholder::IpVersion => Value::Int(match IpNet::from(input) {
                 IpNet::V4(_) => 4,

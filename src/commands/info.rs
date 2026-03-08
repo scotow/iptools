@@ -1,6 +1,5 @@
 use std::{fmt, fmt::Write, net::IpAddr};
 
-use anyhow::Error as AnyError;
 use ipnet::IpNet;
 use itertools::Itertools;
 
@@ -39,7 +38,7 @@ pub fn process_batch(
     padding: bool,
     sort: bool,
     unique: bool,
-) -> Result<(), AnyError> {
+) -> Result<(), anyhow::Error> {
     let mut input = Input::<AutoNet>::Lazy(sources);
     if unique {
         input.unique()?;
@@ -158,13 +157,14 @@ impl Field {
 }
 
 fn to_binary(addr: IpAddr) -> String {
-    let as_str = addr.to_string();
     match addr {
-        IpAddr::V4(_) => as_str
+        IpAddr::V4(_) => addr
+            .to_string()
             .split('.')
             .map(|p| format!("{:08b}", p.parse::<u8>().unwrap()))
             .join("."),
-        IpAddr::V6(_) => as_str
+        IpAddr::V6(_) => addr
+            .to_string()
             .split(':')
             .map(|p| {
                 if p.is_empty() {

@@ -1,14 +1,13 @@
 use std::{net::IpAddr, str::FromStr};
 
-use anyhow::Error as AnyError;
 use ipnet::IpNet;
-use serde::{de, Deserialize, Deserializer};
+use serde::{Deserialize, Deserializer, de};
 
 #[derive(Ord, PartialOrd, Eq, PartialEq, Hash, Copy, Clone, Debug)]
 pub struct AutoNet(pub IpNet);
 
 impl FromStr for AutoNet {
-    type Err = AnyError;
+    type Err = anyhow::Error;
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         if input.contains('/') {

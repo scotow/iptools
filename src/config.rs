@@ -7,11 +7,11 @@ use serde::Deserialize;
 use crate::auto_net::AutoNet;
 
 #[derive(Deserialize, Debug)]
-pub struct Configuration {
+pub struct Config {
     pub groups: Option<Vec<Group>>,
 }
 
-impl Configuration {
+impl Config {
     pub fn load(path: Option<PathBuf>) -> Result<Option<Self>, AnyError> {
         match path {
             Some(path) => Ok(toml::from_str(&fs::read_to_string(path)?)?),
@@ -78,7 +78,7 @@ impl GroupSource {
                     .unwrap_or_else(|| "sh".to_owned());
                 let output = String::from_utf8(
                     Command::new(shell)
-                        .args(["-c", &command])
+                        .args(["-c", command])
                         .output()
                         .context("group command failure")?
                         .stdout,

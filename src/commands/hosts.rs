@@ -1,6 +1,5 @@
 use std::net::IpAddr;
 
-use anyhow::Error as AnyError;
 use either::Either;
 use ipnet::IpNet;
 use itertools::Itertools;
@@ -12,7 +11,7 @@ pub fn process_batch(
     all: bool,
     sort: bool,
     unique: bool,
-) -> Result<(), AnyError> {
+) -> Result<(), anyhow::Error> {
     let input = Input::<IpNet>::Lazy(sources);
     if sort || unique {
         let mut hosts = input

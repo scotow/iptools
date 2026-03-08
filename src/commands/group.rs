@@ -1,17 +1,15 @@
-use anyhow::{bail, Error as AnyError};
+use anyhow::bail;
 use itertools::Itertools;
 
-use crate::{
-    addr_or_net::AddrOrNet, configuration::Configuration, group, input::Input, source::Source,
-};
+use crate::{addr_or_net::AddrOrNet, config::Config, group, input::Input, source::Source};
 
 pub fn process_batch(
     sources: Vec<Source>,
-    mut configuration: Option<Configuration>,
+    mut configuration: Option<Config>,
     exit_no_match: bool,
     sort: bool,
     unique: bool,
-) -> Result<(), AnyError> {
+) -> Result<(), anyhow::Error> {
     let input = Input::<AddrOrNet>::Lazy(sources);
     if sort || unique {
         let mut groups = Vec::new();

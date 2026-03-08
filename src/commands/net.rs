@@ -1,6 +1,5 @@
 use std::net::IpAddr;
 
-use anyhow::Error as AnyError;
 use ipnet::IpNet;
 use itertools::Itertools;
 
@@ -12,7 +11,7 @@ pub fn process_batch(
     cidr: bool,
     sort: bool,
     unique: bool,
-) -> Result<(), AnyError> {
+) -> Result<(), anyhow::Error> {
     let input = Input::<IpAddr>::Lazy(sources);
     if sort || unique {
         let mut nets = input
@@ -44,6 +43,6 @@ pub fn process_batch(
     Ok(())
 }
 
-fn process_single(addr: IpAddr, prefix_len: u8) -> Result<IpNet, AnyError> {
+fn process_single(addr: IpAddr, prefix_len: u8) -> Result<IpNet, anyhow::Error> {
     Ok(IpNet::new(addr, prefix_len)?.trunc())
 }

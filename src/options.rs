@@ -10,7 +10,7 @@ pub struct Options {
     /// Path to the configuration file
     /// ({$PWD/.config,$HOME/.config,/etc}/iptools.toml if not specified).
     #[arg(short = 'C', long = "config", global = true)]
-    pub configuration_path: Option<PathBuf>,
+    pub config_path: Option<PathBuf>,
     #[command(subcommand)]
     pub command: Command,
     /// File path(s) to read from ('-' for stdin).
@@ -57,10 +57,12 @@ pub enum Command {
     },
     /// List all the IP addresses belonging to a network.
     Hosts {
-        /// Add network and broadcast address if available.
-        #[arg(short, long)]
-        all: bool,
+        /// Remove network and broadcast address if available.
+        #[arg(short = 'A', long)]
+        no_all: bool,
     },
+    /// Recursively merge consecutive and aligned subnets into supernets.
+    Merge,
     /// Filter addresses and networks based on a query.
     Filter {
         /// Add network and broadcast address if available.

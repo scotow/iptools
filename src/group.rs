@@ -1,11 +1,11 @@
-use anyhow::{bail, Error as AnyError};
+use anyhow::bail;
 
-use crate::{addr_or_net::AddrOrNet, configuration::Configuration};
+use crate::{addr_or_net::AddrOrNet, config::Config};
 
 pub fn matching_groups(
     input: AddrOrNet,
-    configuration: Option<&mut Configuration>,
-) -> Result<impl Iterator<Item = Result<&str, AnyError>>, AnyError> {
+    configuration: Option<&mut Config>,
+) -> Result<impl Iterator<Item = Result<&str, anyhow::Error>>, anyhow::Error> {
     let groups = match configuration {
         Some(configuration) => match &mut configuration.groups {
             Some(groups) => groups,

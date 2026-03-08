@@ -6,7 +6,6 @@ use std::{
     str::FromStr,
 };
 
-use anyhow::Error as AnyError;
 use itertools::Itertools;
 
 use crate::source::Source;
@@ -17,10 +16,10 @@ pub enum Input<T> {
 }
 
 impl<T> Input<T> {
-    pub fn load_to_memory(&mut self) -> Result<(), AnyError>
+    pub fn load_to_memory(&mut self) -> Result<(), anyhow::Error>
     where
         T: FromStr,
-        <T as FromStr>::Err: Into<AnyError>,
+        <T as FromStr>::Err: Into<anyhow::Error>,
     {
         match self {
             Self::Memory(_values) => Ok(()),
@@ -35,10 +34,10 @@ impl<T> Input<T> {
         }
     }
 
-    pub fn sort(&mut self) -> Result<(), AnyError>
+    pub fn sort(&mut self) -> Result<(), anyhow::Error>
     where
         T: FromStr + Ord,
-        <T as FromStr>::Err: Into<AnyError>,
+        <T as FromStr>::Err: Into<anyhow::Error>,
     {
         self.load_to_memory()?;
         match self {
@@ -50,10 +49,10 @@ impl<T> Input<T> {
         Ok(())
     }
 
-    pub fn unique(&mut self) -> Result<(), AnyError>
+    pub fn unique(&mut self) -> Result<(), anyhow::Error>
     where
         T: FromStr + Eq + Hash,
-        <T as FromStr>::Err: Into<AnyError>,
+        <T as FromStr>::Err: Into<anyhow::Error>,
     {
         self.load_to_memory()?;
         match self {
@@ -71,9 +70,9 @@ impl<T> Input<T> {
 impl<T> IntoIterator for Input<T>
 where
     T: FromStr,
-    <T as FromStr>::Err: Into<AnyError>,
+    <T as FromStr>::Err: Into<anyhow::Error>,
 {
-    type Item = Result<T, AnyError>;
+    type Item = Result<T, anyhow::Error>;
     type IntoIter = IntoIter<T>;
 
     fn into_iter(self) -> Self::IntoIter {
@@ -103,11 +102,11 @@ where
 
 pub enum IntoIter<T> {
     Memory(std::vec::IntoIter<T>),
-    Lazy(Box<dyn Iterator<Item = Result<T, AnyError>>>),
+    Lazy(Box<dyn Iterator<Item = Result<T, anyhow::Error>>>),
 }
 
 impl<T> Iterator for IntoIter<T> {
-    type Item = Result<T, AnyError>;
+    type Item = Result<T, anyhow::Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
         match self {
